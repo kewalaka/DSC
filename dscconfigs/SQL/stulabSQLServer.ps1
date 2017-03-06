@@ -52,24 +52,43 @@ Configuration SQLServer
            Name   = "RSAT-Clustering-CmdInterface"
        }
 
-        xSQLServerSetup "PrepareMSSQLSERVER"
+        xSQLServerSetup "InstallSQLServerCluster"
         {
             DependsOn = @(
-                "[WindowsFeature]NET-Framework-Core",
-                "[WindowsFeature]Failover-Clustering"
+                "[WindowsFeature]FailoverClustering"
             )
-            Action = "PrepareFailoverCluster"
+            Action = 'InstallFailoverCluster'
+            ForceReboot = $false
+
             SourcePath = $Node.SourcePath
+            UpdateEnabled = 'False'
+
             SourceCredential = $storageAccount
             SetupCredential = $domainAdminCred
-            Features = $Node.Features
+
             InstanceName = $Node.InstanceName
-            FailoverClusterNetworkName = $Node.FailoverClusterNetworkName
-            FailoverClusterIPAddress = $Node.FailoverClusterIPAddress
+            Features = $Node.Features
+
+            InstallSharedDir = 'C:\Program Files\Microsoft SQL Server'
+            InstallSharedWOWDir = 'C:\Program Files (x86)\Microsoft SQL Server'
+            InstanceDir = 'C:\Program Files\Microsoft SQL Server'
+
             SQLSvcAccount  = $sqlserviceaccount
             AgtSvcAccount = $sqlagentaccount
-        }
+            SQLSysAdminAccounts = $Node.AdminAccounts               
 
+            InstallSQLDataDir = 'D:\MSSQL\Data'
+            SQLUserDBDir = 'D:\MSSQL\Data'
+            SQLUserDBLogDir = 'D:\MSSQL\Log'
+            SQLTempDBDir = 'D:\MSSQL\Temp'
+            SQLTempDBLogDir = 'D:\MSSQL\Temp'
+            SQLBackupDir = 'D:\MSSQL\Backup'
+
+            FailoverClusterNetworkName = $Node.FailoverClusterNetworkName
+            FailoverClusterIPAddress = $Node.FailoverClusterIPAddress
+
+        }
+        
         xSqlServerFirewall "FirewallMSSQLSERVER"
         {
             DependsOn = "[xSQLServerFailoverClusterSetup]PrepareMSSQLSERVER"
@@ -155,6 +174,26 @@ Configuration SQLServer
                 RetryCount = 720
             }
 
+
+        xSQLServerSetup "PrepareMSSQLSERVER"
+        {
+            DependsOn = @(
+                "[WindowsFeature]NET-Framework-Core",
+                "[WindowsFeature]Failover-Clustering"
+            )
+            Action = "PrepareFailoverCluster"
+            SourcePath = $Node.SourcePath
+            SourceCredential = $storageAccount
+            SetupCredential = $domainAdminCred
+            Features = $Node.Features
+            InstanceName = $Node.InstanceName
+            FailoverClusterNetworkName = $Node.FailoverClusterNetworkName
+            FailoverClusterIPAddress = $Node.FailoverClusterIPAddress
+            SQLSvcAccount  = $sqlserviceaccount
+            AgtSvcAccount = $sqlagentaccount
+        }
+
+<#
             xSQLServerSetup "CompleteMSSQLSERVER"
             {
                 Action = "CompleteFailoverCluster"
