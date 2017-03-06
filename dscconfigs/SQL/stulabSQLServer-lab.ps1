@@ -4,8 +4,8 @@ $DSCconfigurationName = 'SQLServer'
 
 $Params = @{"domainAdminCred"="domainAdminCred";
             "storageAccount"="storageAccount";
-            "SQL engine service account"="sqlserviceaccount";
-            "SQL agent service account"="sqlagentaccount"}
+            "sqlserviceaccount"="SQL engine service account";
+            "sqlagentaccount"="SQL agent service account"}
 
 $ConfigData = @{
     AllNodes = @(

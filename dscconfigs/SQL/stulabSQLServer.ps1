@@ -27,20 +27,20 @@ Configuration SQLServer
             domainAdminCred = $domainAdminCred
         } 
 
-        WindowsFeature FC
+        WindowsFeature FailoverClustering
         {
             Name = "Failover-Clustering"
             Ensure = "Present"
         }
 
-        WindowsFeature FailoverClusterTools 
+        WindowsFeature RSATClusteringMgmt 
         { 
             Ensure = "Present" 
             Name = "RSAT-Clustering-Mgmt"
-            DependsOn = "[WindowsFeature]FC"
+            DependsOn = "[WindowsFeature]FailoverClustering"
         } 
 
-        WindowsFeature FCPS
+        WindowsFeature RSATClusteringPowerShell
         {
             Name = "RSAT-Clustering-PowerShell"
             Ensure = "Present"
@@ -51,32 +51,6 @@ Configuration SQLServer
            Ensure = "Present"
            Name   = "RSAT-Clustering-CmdInterface"
        }
-
-        xSQLServerSetup "PrepareMSSQLSERVER"
-        {
-            DependsOn = @(
-                "[WindowsFeature]NET-Framework-Core",
-                "[WindowsFeature]Failover-Clustering"
-            )
-            Action = "PrepareFailoverCluster"
-            SourcePath = $Node.SourcePath
-            SourceCredential = $storageAccount
-            SetupCredential = $domainAdminCred
-            Features = $Node.Features
-            InstanceName = $Node.InstanceName
-            FailoverClusterNetworkName = $Node.FailoverClusterNetworkName
-            FailoverClusterIPAddress = $Node.FailoverClusterIPAddress
-            SQLSvcAccount  = $sqlserviceaccount
-            AgtSvcAccount = $sqlagentaccount
-        }
-
-        xSqlServerFirewall "FirewallMSSQLSERVER"
-        {
-            DependsOn = "[xSQLServerFailoverClusterSetup]PrepareMSSQLSERVER"
-            SourcePath = $Node.SourcePath
-            InstanceName = $Node.InstanceName
-            Features = $Node.Features
-        }
 
         If ($node.Role -eq "PrimaryServerNode")
         {
@@ -126,13 +100,14 @@ Configuration SQLServer
         }
         If ($node.Role -eq "ReplicaServerNode" )
         {
+
             xWaitForCluster waitForCluster 
             { 
                 Name = $Node.ClusterName 
                 RetryIntervalSec = 10 
                 RetryCount = 20
             } 
-       
+      
             xCluster joinCluster 
             { 
                 Name = $Node.ClusterName 
@@ -146,33 +121,6 @@ Configuration SQLServer
         If ($node.Role -eq "PrimaryServerNode")
         {
            
-            WaitForAll "SqlPrep"
-            {                
-                NodeName = @($computers)
-                ResourceName = "[xSQLServerFailoverClusterSetup]PrepareMSSQLSERVER"
-                PsDscRunAsCredential = $Node.InstallerServiceAccount
-                RetryIntervalSec = 5
-                RetryCount = 720
-            }
-
-            xSQLServerSetup "CompleteMSSQLSERVER"
-            {
-                Action = "CompleteFailoverCluster"
-                SourcePath = $Node.SourcePath
-                SourceCredential = $storageAccount
-                SetupCredential = $domainAdminCred
-                Features = $Node.Features
-                InstanceName = $Node.InstanceName
-                FailoverClusterNetworkName = $Node.FailoverClusterNetworkName
-                FailoverClusterIPAddress = $Node.FailoverClusterIPAddress
-                SQLSvcAccount = $sqlserviceaccount
-                AgtSvcAccount = $sqlagentaccount
-                InstallSQLDataDir = "D:\"
-                SQLSysAdminAccounts = $Node.AdminAccounts   
-                DependsOn = @(
-                    "[WaitForAll]SqlPrep"
-                )                     
-            }            
         } 
     <#
         Script CloudWitness
