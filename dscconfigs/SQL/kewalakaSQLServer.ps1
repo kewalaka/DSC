@@ -16,12 +16,12 @@ Configuration SQLServer
     )
 
     Import-DscResource -ModuleName xComputerManagement, xFailovercluster, xActiveDirectory, xSOFS, xSQLServer
-    Import-DSCResource -ModuleName stulabServerConfig
+    Import-DSCResource -ModuleName kewalakaServerConfig
 
     Node $AllNodes.Nodename
     {
 
-        stulabBaseServerConfig basebuild
+        kewalakaBaseServerConfig basebuild
         {
             DomainName = $Node.DomainName
             domainAdminCred = $domainAdminCred
@@ -62,7 +62,7 @@ Configuration SQLServer
                 )
                 Name = $Node.ClusterName
                 StaticIPAddress = $Node.ClusterIPAddress
-                DomainAdministratorCredential = $Node.InstallerServiceAccount
+                DomainAdministratorCredential = $domainAdminCred
             }
 
             Script CloudWitness
@@ -81,23 +81,32 @@ Configuration SQLServer
                 DependsOn = "[Script]CloudWitness"
             }
 
-<#
+            WaitForAll OtherNode
+            {
+                NodeName = $AllNodes.Where{$_.Role -eq "ReplicaServerNode"}.NodeName
+                ResourceName = "[xCluster]joinCluster"
+                RetryIntervalSec = 30
+                RetryCount = 5
+                PsDscRunAsCredential = $domainAdminCred
+                DependsOn = "[Script]IncreaseClusterTimeouts"                
+            }
+
             Script EnableS2D
             {
                 SetScript = "Enable-ClusterS2D -Confirm:0; New-Volume -StoragePoolFriendlyName S2D* -FriendlyName VDisk01 -FileSystem CSVFS_REFS -UseMaximumSize"
                 TestScript = "(Get-ClusterSharedVolume).State -eq 'Online'"
                 GetScript = "@{Ensure = if ((Get-ClusterSharedVolume).State -eq 'Online') {'Present'} Else {'Absent'}}"
-                DependsOn = "[Script]IncreaseClusterTimeouts"
+                DependsOn = "[WaitForAll]OtherNode"
             }
 
             xSOFS EnableSOFS
             {
                 SOFSName = $SOFSName
-                DomainAdministratorCredential = $DomainCreds
+                DomainAdministratorCredential = $domainAdminCred
                 DependsOn = "[Script]EnableS2D"
             }
-#>            
         }
+
         If ($node.Role -eq "ReplicaServerNode" )
         {
 
@@ -112,25 +121,13 @@ Configuration SQLServer
             { 
                 Name = $Node.ClusterName 
                 StaticIPAddress = $Node.ClusterIPAddress 
-                DomainAdministratorCredential = $Node.InstallerServiceAccount
+                DomainAdministratorCredential = $domainAdminCred
             
                 DependsOn = "[xWaitForCluster]waitForCluster" 
             }
         }        
 
-        If ($node.Role -eq "PrimaryServerNode")
-        {
-           
-        } 
-    <#
-        Script CloudWitness
-        {
-            SetScript = "Set-ClusterQuorum -CloudWitness -AccountName ${witnessStorageName} -AccessKey $($witnessStorageKey.GetNetworkCredential().Password)"
-            TestScript = "(Get-ClusterQuorum).QuorumResource.Name -eq 'Cloud Witness'"
-            GetScript = "@{Ensure = if ((Get-ClusterQuorum).QuorumResource.Name -eq 'Cloud Witness') {'Present'} else {'Absent'}}"
-            DependsOn = "[xCluster]FailoverCluster"
-        }
-
+<#
         xFirewall Firewall-SQL-tcp1433
         {
             Name                  = ""

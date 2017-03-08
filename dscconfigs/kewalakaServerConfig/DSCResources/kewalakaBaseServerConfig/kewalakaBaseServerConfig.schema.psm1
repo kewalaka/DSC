@@ -1,4 +1,4 @@
-Configuration stulabBaseServerConfig
+Configuration kewalakaBaseServerConfig
 {
     param (
         [string[]]$DNSServers = @("10.0.0.7", "10.0.0.8"),

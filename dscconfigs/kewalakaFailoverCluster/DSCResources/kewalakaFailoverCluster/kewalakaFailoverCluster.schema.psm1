@@ -1,4 +1,4 @@
-Configuration stulabFailoverCluster
+Configuration kewalakaFailoverCluster
 {
     param (
         [Parameter(Mandatory)]
@@ -9,9 +9,9 @@ Configuration stulabFailoverCluster
     )
 
     Import-DscResource -ModuleName xComputerManagement, xFailovercluster, xActiveDirectory, xSOFS
-    Import-DSCResource -ModuleName stulabServerConfig
+    Import-DSCResource -ModuleName kewalakaServerConfig
     
-    stulabBaseServerConfig basebuild
+    kewalakaBaseServerConfig basebuild
     {
         DomainName = $Node.DomainName
         domainAdminCred = $domainAdminCred

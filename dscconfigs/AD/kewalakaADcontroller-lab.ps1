@@ -1,5 +1,5 @@
-$resourceGroupName = 'stulab'
-$automationAccountName = 'stulab'
+$resourceGroupName = 'kewalaka'
+$automationAccountName = 'kewalaka'
 $DSCconfigurationName = 'ADcontroller'
 
 $Params = @{"safemodeAdminCred"="safemodeAdminCred";

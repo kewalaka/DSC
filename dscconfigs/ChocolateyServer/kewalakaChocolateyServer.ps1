@@ -9,13 +9,13 @@ configuration ChocolateyServer
     Import-DSCResource -ModuleName cChoco
     Import-DSCResource -ModuleName xWebAdministration
     Import-DscResource -ModuleName cNtfsAccessControl
-    Import-DscResource -ModuleName stulabServerConfig
+    Import-DscResource -ModuleName kewalakaServerConfig
 
     $destination = "C:\inetpub\chocolatey"
 
     Node $AllNodes.Nodename
     {
-        stulabBaseServerConfig basebuild
+        kewalakaBaseServerConfig basebuild
         {
             DomainName = $Node.DomainName
             domainAdminCred = $domainAdminCred
