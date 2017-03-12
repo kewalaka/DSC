@@ -1,5 +1,5 @@
-$resourceGroupName = 'kewalaka'
-$automationAccountName = 'kewalaka'
+$resourceGroupName = 'stulab'
+$automationAccountName = 'stulab'
 $DSCconfigurationName = 'SQLServer'
 
 $Params = @{"domainAdminCred"="domainAdminCred";
@@ -18,8 +18,8 @@ $ConfigData = @{
             RebootIfNeeded = $true
             InstanceName    = "MSSQLSERVER"
             Features        = "SQLENGINE"
-            SourcePath = "\\kewalaka.file.core.windows.net\media\Installers\Microsoft\SQL\2016SP1-Dev\"
-            ClusterName = "labclus01" 
+            SourcePath = "\\stulab.file.core.windows.net\media\Installers\Microsoft\SQL\2016SP1-Dev\"
+            ClusterName = "S2DSQL-S2D-c" 
             ClusterIPAddress = "10.0.0.254"
             FailoverClusterNetworkName = "labsqlclus01"
             FailoverClusterIPAddress   = "10.0.0.253"
@@ -27,12 +27,12 @@ $ConfigData = @{
         },
 
         @{
-            Nodename = "labsql01"
+            Nodename = "S2DSQL-S2D-0"
             Role = "PrimaryServerNode"
         },
 
         @{
-            Nodename = "labsql02"
+            Nodename = "S2DSQL-S2D-1"
             Role = "ReplicaServerNode"
         }        
     )
@@ -74,7 +74,7 @@ param (
 }
 
 New-AutomationCredentials -name "domainAdminCred" -username "TEST\stu"
-New-AutomationCredentials -name "storageAccount" -username "kewalaka"
+New-AutomationCredentials -name "storageAccount" -username "stulab"
 New-AutomationCredentials -name "SQL engine service account" -username "TEST\svc_sqlengine"
 New-AutomationCredentials -name "SQL agent service account" -username "TEST\svc_sqlagent"
 

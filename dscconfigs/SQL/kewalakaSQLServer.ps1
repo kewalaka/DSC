@@ -15,7 +15,7 @@ Configuration SQLServer
         [pscredential]$sqlagentaccount        
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xFailovercluster, xActiveDirectory, xSOFS, xSQLServer
+    Import-DscResource -ModuleName xComputerManagement, xFailovercluster, xActiveDirectory, xSQLServer
     Import-DSCResource -ModuleName kewalakaServerConfig
 
     Node $AllNodes.Nodename
@@ -99,12 +99,6 @@ Configuration SQLServer
                 DependsOn = "[WaitForAll]OtherNode"
             }
 
-            xSOFS EnableSOFS
-            {
-                SOFSName = $SOFSName
-                DomainAdministratorCredential = $domainAdminCred
-                DependsOn = "[Script]EnableS2D"
-            }
         }
 
         If ($node.Role -eq "ReplicaServerNode" )
@@ -127,6 +121,53 @@ Configuration SQLServer
             }
         }        
 
+        If ($node.Role -eq "PrimaryServerNode")
+        {
+            xSQLServerSetup "InstallSQLServerCluster"
+            {
+                DependsOn = @(
+                    "[Script]EnableS2D"
+                )
+                Action = 'InstallFailoverCluster'
+                ForceReboot = $false
+
+                SourcePath = $Node.SourcePath
+                UpdateEnabled = 'False'
+
+                SourceCredential = $storageAccount
+                SetupCredential = $domainAdminCred
+
+                InstanceName = $Node.InstanceName
+                Features = $Node.Features
+
+                InstallSharedDir = 'C:\Program Files\Microsoft SQL Server'
+                InstallSharedWOWDir = 'C:\Program Files (x86)\Microsoft SQL Server'
+                InstanceDir = 'C:\Program Files\Microsoft SQL Server'
+
+                SQLSvcAccount  = $sqlserviceaccount
+                AgtSvcAccount = $sqlagentaccount
+                SQLSysAdminAccounts = $Node.AdminAccounts               
+
+                InstallSQLDataDir = 'C:\ClusterStorage\Volume1\Data'
+                SQLUserDBDir = 'C:\ClusterStorage\Volume1\Data'
+                SQLUserDBLogDir = 'C:\ClusterStorage\Volume1\Log'
+                SQLTempDBDir = 'C:\ClusterStorage\Volume1\Temp'
+                SQLTempDBLogDir = 'C:\ClusterStorage\Volume1\Temp'
+                SQLBackupDir = 'C:\ClusterStorage\Volume1\Backup'
+
+                FailoverClusterNetworkName = $Node.FailoverClusterNetworkName
+                FailoverClusterIPAddress = $Node.FailoverClusterIPAddress
+
+            }
+        
+            xSqlServerFirewall "FirewallMSSQLSERVER"
+            {
+                DependsOn = "[xSQLServerSetup]InstallSQLServerCluster"
+                SourcePath = $Node.SourcePath
+                InstanceName = $Node.InstanceName
+                Features = $Node.Features
+            }
+        }
 <#
         xFirewall Firewall-SQL-tcp1433
         {
