@@ -11,7 +11,7 @@ Configuration ADcontroller
         [pscredential]$domainAdminCred
     )
 
-    Import-DscResource -ModuleName PSDesiredStateConfiguration,xActiveDirectory,xPendingReboot,xDnsServer
+    Import-DscResource -ModuleName PSDesiredStateConfiguration,xActiveDirectory,xPendingReboot,xDnsServer,xDhcpServer
 
     Node $AllNodes.Nodename
     {
@@ -99,6 +99,49 @@ Configuration ADcontroller
             IsSingleInstance = 'Yes'
             IPAddresses = '8.8.8.8','8.8.4.4'
             DependsOn = "[xPendingReboot]AfterADDSinstall"
+        }
+    }
+
+    Node $AllNodes.Where{$_.DHCPScopes}.Nodename
+    {
+
+        WindowsFeature DHCP
+        {
+            Ensure = "Present"
+            Name = "DHCP"
+        }
+
+        xDhcpServerAuthorization "LocalServerActivation"
+        {
+            Ensure = 'Present'
+            DependsOn = @('[WindowsFeature]DHCP') 
+        }
+
+        ForEach ($DHCPScope in $Node.DHCPScopes) {
+
+            xDhcpServerScope "$DHCPScope-Scope"
+            {
+                Ensure = 'Present'
+                IPEndRange = $DHCPScope.IPEndRange
+                IPStartRange = $DHCPScope.IPStartRange 
+                Name = $DHCPScope.Name
+                SubnetMask = $DHCPScope.SubnetMask
+                State = 'Active'
+                AddressFamily = 'IPv4'
+                DependsOn = @('[WindowsFeature]DHCP') 
+            }
+
+            xDhcpServerOption "$DHCPScope-Option"
+            {
+                Ensure = 'Present'
+                ScopeID = $DHCPScope.ScopeID
+                DnsDomain = $Node.DomainName
+                DnsServerIPAddress = $DHCPScope.DNSServer
+                AddressFamily = 'IPv4'
+                Router = $DHCPScope.Router
+                DependsOn = @('[WindowsFeature]DHCP') 
+            }
+
         }
     }
 }
