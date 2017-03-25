@@ -1,27 +1,36 @@
-$resourceGroupName = 'kewalaka'
-$automationAccountName = 'kewalaka'
-$DSCconfigurationName = 'ADcontroller'
+# load in the configuration document
+. $env:srcroot\AzureAutomation\dscconfigs\AD\kewalakaADcontroller.ps1
 
-$Params = @{"safemodeAdminCred"="safemodeAdminCred";
-            "domainAdminCred"="domainAdminCred"}
-
-$ConfigData = @{
+# environment specific settings
+$ConfigData =  @{
     AllNodes = @(
 
         @{
             Nodename = "*"
-            DomainName = "corp.testworld.co.nz"
+            DomainName = "kewalaka.nz"
             DomainNetBIOSName = "test"
+            CertificateFile = "C:\Admin\Dsc\DscPublicKey.cer"
+            Thumbprint = "8AD8E3731EE4B1D4C3408E491855FFE8A13CEEDB"
             RetryCount = 20
             RetryIntervalSec = 30
             PSDscAllowDomainUser = $true
-            PSDscAllowPlainTextPassword = $true
             RebootIfNeeded = $true
         },
 
         @{
             Nodename = "labdc01"
             Role = "First DC"
+            DHCPScopes = @(            
+                @{ 
+                    Name         = 'Lab'
+                    ScopeID      = '10.66.66.0'
+                    IPStartRange = '10.66.66.10'
+                    IPEndRange   = '10.66.66.250'
+                    SubnetMask   = '255.255.255.0'
+                    Router       = '10.66.66.1'
+                    DNSServer    = @('10.66.66.5')                    
+                }
+            )
         },
 
         @{
@@ -31,16 +40,25 @@ $ConfigData = @{
     )
 }
 
+$DSCFolder = "C:\Admin\DSC"
 
-if ( $AzureCred -eq $null )
+# Generate MOF
+New-Item -ItemType Directory -Path $DSCFolder -ErrorAction SilentlyContinue
+
+if ($Cred -eq $null)
 {
-    $AzureCred = Get-Credential -Message "Please enter your Azure Credentials" -UserName "stuart.mace@powerco.co.nz"
+    $Cred = (Get-Credential -Message "New Domain Admin Credentials" -UserName "Administrator")
 }
 
-$azureAccount = Login-AzureRmAccount -Credential $AzureCred -SubscriptionName 'Visual Studio Enterprise'
+ADcontroller -OutputPath $DSCFolder -ConfigurationData $ConfigData `
+-safemodeAdministratorCred $Cred `
+-domainCred $Cred `
+-NewADUserCred $Cred
 
-Start-AzureRmAutomationDscCompilationJob -ResourceGroupName $resourceGroupName -AutomationAccountName $automationAccountName `
-                                                -ConfigurationName $DSCconfigurationName -ConfigurationData $ConfigData `
-                                                -Parameters $Params
+# set up the LCM to use the certificate
+# Set-DscLocalConfigurationManager -ComputerName $env:COMPUTERNAME -Path $DSCFolder -Verbose
 
-#Get-AzureRmAutomationDscCompilationJob -ResourceGroupName $resourceGroupName -AutomationAccountName $automationAccountName -ConfigurationName $DSCconfigurationName
+#$DSCFolder = "C:\Admin\DSC"
+#$x = Test-DscConfiguration -ComputerName $env:COMPUTERNAME -Path $DSCFolder -Verbose
+#Start-DSCConfiguration -ComputerName $env:COMPUTERNAME -Path $DSCFolder -Force -Verbose -Wait
+# 
