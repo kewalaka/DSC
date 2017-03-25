@@ -20,6 +20,9 @@ $ConfigData =  @{
         @{
             Nodename = "labdc01"
             Role = "First DC"
+            IPAddress = "10.66.66.5"
+            PrefixLength   = '24'
+            Gateway = "10.66.66.1"
             DHCPScopes = @(            
                 @{ 
                     Name         = 'Lab'
@@ -28,7 +31,7 @@ $ConfigData =  @{
                     IPEndRange   = '10.66.66.250'
                     SubnetMask   = '255.255.255.0'
                     Router       = '10.66.66.1'
-                    DNSServer    = @('10.66.66.5')                    
+                    DNSServer    = @('10.66.66.5','10.66.66.6')
                 }
             )
         },
@@ -36,6 +39,9 @@ $ConfigData =  @{
         @{
             Nodename = "labdc02"
             Role = "Additional DC"
+            IPAddress = "10.66.66.6"
+            PrefixLength   = '24'
+            Gateway = "10.66.66.1"
         }
     )
 }

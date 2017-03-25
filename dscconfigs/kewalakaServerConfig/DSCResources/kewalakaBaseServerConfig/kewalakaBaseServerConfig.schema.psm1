@@ -22,6 +22,21 @@ Configuration kewalakaBaseServerConfig
         State = "Running"
     }
 
+    $InterfaceAlias = 'Ethernet'
+
+    xNetAdapterBinding DisableIPv6
+    {
+        InterfaceAlias = $InterfaceAlias
+        ComponentId = 'ms_tcpip6'
+        State = 'Disabled'
+    }    
+
+    xNetBIOS DisableNetBIOS 
+    {
+            InterfaceAlias = $InterfaceAlias
+            Setting        = 'Disable'
+    }
+
     if ($DomainName)
     {
         xDSCFirewall EnabledDomain

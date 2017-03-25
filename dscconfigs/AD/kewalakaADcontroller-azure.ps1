@@ -2,6 +2,7 @@ $resourceGroupName = 'kewalaka'
 $automationAccountName = 'kewalaka'
 $DSCconfigurationName = 'ADcontroller'
 
+# get credentials from Azure Automation
 $Params = @{"safemodeAdminCred"="safemodeAdminCred";
             "domainAdminCred"="domainAdminCred"}
 
@@ -10,23 +11,25 @@ $ConfigData = @{
 
         @{
             Nodename = "*"
-            DomainName = "corp.testworld.co.nz"
+            DomainName = "kewalaka.nz"
             DomainNetBIOSName = "test"
             RetryCount = 20
             RetryIntervalSec = 30
             PSDscAllowDomainUser = $true
-            PSDscAllowPlainTextPassword = $true
+            PSDscAllowPlainTextPassword = $true  # DSC resources are encrypted on Azure, so this is OK
             RebootIfNeeded = $true
         },
 
         @{
             Nodename = "labdc01"
             Role = "First DC"
+            # Networking details are set using ARM template
         },
 
         @{
             Nodename = "labdc02"
             Role = "Additional DC"
+            # Networking details are set using ARM template
         }
     )
 }

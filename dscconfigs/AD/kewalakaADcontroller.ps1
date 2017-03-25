@@ -11,7 +11,7 @@ Configuration ADcontroller
         [pscredential]$domainAdminCred
     )
 
-    Import-DscResource -ModuleName PSDesiredStateConfiguration,xActiveDirectory,xPendingReboot,xDnsServer,xDhcpServer
+    Import-DscResource -ModuleName PSDesiredStateConfiguration,xActiveDirectory,xPendingReboot,xDnsServer,xDhcpServer,xNetworking
 
     Node $AllNodes.Nodename
     {
@@ -36,7 +36,36 @@ Configuration ADcontroller
         {
             Name = 'AfterADDSinstall'
             DependsOn = "[WindowsFeature]ADDSToolsInstall"
-        }        
+        }
+
+    }
+
+    Node $AllNodes.Where{$_.IPAddress}.Nodename
+    {
+        $AddressFamily = 'IPv4'
+        $InterfaceAlias = 'Ethernet'
+
+        xDhcpClient DisabledDhcpClient
+        {
+            State          = 'Disabled'
+            InterfaceAlias = $InterfaceAlias
+            AddressFamily  = $AddressFamily
+        }
+
+        xIPAddress NewIPAddress
+        {
+            IPAddress      = $Node.IPAddress
+            InterfaceAlias = $InterfaceAlias          
+            PrefixLength   = $Node.PrefixLength
+            AddressFamily  = $AddressFamily
+        }    
+
+        xDefaultGatewayAddress SetDefaultGateway
+        {
+            Address        = $Node.Gateway
+            InterfaceAlias = $InterfaceAlias
+            AddressFamily  = $AddressFamily
+        }                
     }
 
     Node $AllNodes.Where{$_.Role -eq "First DC"}.Nodename
