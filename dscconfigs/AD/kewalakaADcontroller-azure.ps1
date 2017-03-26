@@ -23,12 +23,14 @@ $ConfigData = @{
         @{
             Nodename = "labdc01"
             Role = "First DC"
+            SiteName = "AustraliaSouthEast"
             # Networking details are set using ARM template
         },
 
         @{
             Nodename = "labdc02"
             Role = "Additional DC"
+            SiteName = "AustraliaSouthEast"            
             # Networking details are set using ARM template
         }
     )

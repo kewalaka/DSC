@@ -25,7 +25,6 @@ configuration ChocolateyServer
         cChocoInstaller installChoco
         {
             InstallDir = "$env:PROGRAMDATA\chocolatey"
-            
         } 
 
         WindowsFeature "Web-Server" { Name   = "Web-Server" }

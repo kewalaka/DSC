@@ -11,7 +11,7 @@ Configuration ADcontroller
         [pscredential]$domainAdminCred
     )
 
-    Import-DscResource -ModuleName PSDesiredStateConfiguration,xActiveDirectory,xPendingReboot,xDnsServer,xDhcpServer,xNetworking
+    Import-DscResource -ModuleName PSDesiredStateConfiguration,xActiveDirectory,xPendingReboot,xDnsServer,xDhcpServer,xNetworking,cActiveDirectorySites
 
     Node $AllNodes.Nodename
     {
@@ -38,6 +38,18 @@ Configuration ADcontroller
             DependsOn = "[WindowsFeature]ADDSToolsInstall"
         }
 
+        cADSite DC1Site { 
+            Name = $Node.SiteName
+            DependsOn = "[xPendingReboot]AfterADDSToolsinstall"
+            Credential = $domainAdminCred 
+        }  
+
+        cADSite DefaultSite { 
+            Name = 'Default-First-Site-Name' 
+            Ensure = 'Absent' 
+            DependsOn = "[xPendingReboot]AfterADDSToolsinstall"
+            Credential = $domainAdminCred 
+        }
     }
 
     Node $AllNodes.Where{$_.IPAddress}.Nodename
@@ -92,7 +104,7 @@ Configuration ADcontroller
         {
             Name = 'AfterADDSinstall'
             DependsOn = "[xWaitForADDomain]DscForestWait"
-        }
+        }   
     }
 
     Node $AllNodes.Where{$_.Role -eq "Additional DC"}.Nodename

@@ -12,7 +12,7 @@ $ConfigData = @{
 
         @{
             Nodename = "*"
-            DomainName = "corp.testworld.co.nz"
+            DomainName = "kewalaka.nz"
             PSDscAllowDomainUser = $true
             PSDscAllowPlainTextPassword = $true
             RebootIfNeeded = $true

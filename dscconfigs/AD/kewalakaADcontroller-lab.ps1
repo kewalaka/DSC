@@ -20,6 +20,7 @@ $ConfigData =  @{
         @{
             Nodename = "labdc01"
             Role = "First DC"
+            SiteName = "DC1"
             IPAddress = "10.66.66.5"
             PrefixLength   = '24'
             Gateway = "10.66.66.1"
@@ -39,6 +40,7 @@ $ConfigData =  @{
         @{
             Nodename = "labdc02"
             Role = "Additional DC"
+            SiteName = "DC1"            
             IPAddress = "10.66.66.6"
             PrefixLength   = '24'
             Gateway = "10.66.66.1"
