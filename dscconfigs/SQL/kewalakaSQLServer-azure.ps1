@@ -46,7 +46,7 @@ if ( $AzureCred -eq $null )
     $AzureCred = new-object -typename System.Management.Automation.PSCredential -argumentlist $username,$password
 }
 
-$azureAccount = Login-AzureRmAccount -Credential $AzureCred -SubscriptionName 'Visual Studio Enterprise'
+$azureAccount = Login-AzureRmAccount -SubscriptionName 'Visual Studio Enterprise' -Credential $AzureCred 
 
 function New-AutomationCredentials
 {
